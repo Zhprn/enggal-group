@@ -33,6 +33,11 @@ enum Gender {
   PEREMPUAN
 }
 
+enum Status {
+  aktif
+  archive
+}
+
 model UserCareer {
   id            String       @id @default(uuid())
   tanggal       DateTime
@@ -59,6 +64,7 @@ model Promo {
   image           String
   banner          String?
   showBanner      Boolean  @default(false)
+  status          Status   @default(aktif)
 }
 
 model Brand {
