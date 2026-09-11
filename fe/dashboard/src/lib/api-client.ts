@@ -110,6 +110,16 @@ export const apiClient = {
       method: "PUT",
       body: body instanceof FormData ? body : JSON.stringify(body),
     }),
+  patch: <TData, TMeta = unknown>(
+    path: string,
+    body?: unknown,
+    options?: ApiFetchOptions,
+  ) =>
+    apiFetch<TData, TMeta>(path, {
+      ...options,
+      method: "PATCH",
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
   delete: <TData, TMeta = unknown>(path: string, options?: ApiFetchOptions) =>
     apiFetch<TData, TMeta>(path, { ...options, method: "DELETE" }),
 };

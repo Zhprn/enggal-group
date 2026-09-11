@@ -9,6 +9,8 @@ import {
   Search,
   Trash2,
   ArrowUpDown,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -59,6 +61,7 @@ export const Route = createFileRoute("/_authenticated/promo/")({
 type PromoItem = {
   id: string;
   title: string;
+  status: "aktif" | "archive";
   berlakuHingga: string;
   brand: {
     id: string,
@@ -76,6 +79,7 @@ type PromoListMeta = {
 async function fetchPromo({
   page,
   limit,
+  status,
   startDate,
   endDate,
   sortBy,
@@ -83,6 +87,7 @@ async function fetchPromo({
 }: {
   page: number;
   limit: number;
+  status?: string;
   startDate?: string;
   endDate?: string;
   sortBy?: string;
@@ -92,6 +97,10 @@ async function fetchPromo({
     page: String(page),
     limit: String(limit),
   });
+
+  if (status && status !== "all") {
+    params.set("status", status);
+  }
 
   if (startDate) {
     params.set("startDate", startDate);
@@ -175,12 +184,16 @@ function SortableHeader({
 function RouteComponent() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [pagination, setPagination] = React.useState({ page: 1, limit: 15 });
+  const [selectedStatus, setSelectedStatus] = React.useState<string>("aktif");
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(
     undefined,
   );
   const [sortConfig, setSortConfig] = React.useState<{ sortBy: string; sortOrder: 'asc' | 'desc' }>({ sortBy: 'berlakuHingga', sortOrder: 'desc' });
   const queryClient = useQueryClient();
   const [deleteTargetId, setDeleteTargetId] = React.useState<string | null>(
+    null,
+  );
+  const [statusTargetId, setStatusTargetId] = React.useState<string | null>(
     null,
   );
 
@@ -196,6 +209,7 @@ function RouteComponent() {
       "promos",
       pagination.page,
       pagination.limit,
+      selectedStatus,
       startDateParam ?? null,
       endDateParam ?? null,
       sortConfig.sortBy,
@@ -204,6 +218,7 @@ function RouteComponent() {
     queryFn: () =>
       fetchPromo({
         ...pagination,
+        status: selectedStatus,
         startDate: startDateParam,
         endDate: endDateParam,
         sortBy: sortConfig.sortBy,
@@ -226,6 +241,11 @@ function RouteComponent() {
     }));
   };
 
+  const handleStatusChange = (value: string) => {
+    setSelectedStatus(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
   const handleDateRangeChange = (value: DateRange | undefined) => {
     setDateRange(value);
     setPagination((prev) => ({ ...prev, page: 1 }));
@@ -234,13 +254,43 @@ function RouteComponent() {
   const handleSort = (column: string) => {
     setSortConfig((prev) => {
       if (prev.sortBy === column) {
-        // Toggle sort order if same column
         return { sortBy: column, sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' };
       }
-      // New column, default to ascending
       return { sortBy: column, sortOrder: 'asc' };
     });
     setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "aktif" | "archive" }) => {
+      await apiClient.patch(`/promo/${id}/status`, { status });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["promos"] });
+      toast.success(
+        variables.status === "archive"
+          ? "Promo berhasil diarsipkan."
+          : "Promo berhasil diaktifkan kembali."
+      );
+    },
+    onError: (mutationError: unknown) => {
+      const message =
+        mutationError instanceof ApiError
+          ? mutationError.message || "Gagal memperbarui status promo."
+          : mutationError instanceof Error
+            ? mutationError.message
+            : "Gagal memperbarui status promo.";
+      toast.error(message);
+    },
+    onSettled: () => {
+      setStatusTargetId(null);
+    },
+  });
+
+  const handleToggleStatus = (promo: PromoItem) => {
+    const nextStatus = promo.status === "aktif" ? "archive" : "aktif";
+    setStatusTargetId(promo.id);
+    updateStatusMutation.mutate({ id: promo.id, status: nextStatus });
   };
 
   const deletePromoMutation = useMutation({
@@ -278,7 +328,9 @@ function RouteComponent() {
     <div className="space-y-6">
       <div className="flex justify-between">
         <h1 className="text-2xl font-semibold text-[#9C1A1C]">Daftar Promo</h1>
-        <div className="flex space-x-6">
+        <div className="flex space-x-4">
+          
+
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -336,7 +388,19 @@ function RouteComponent() {
               />
             </div>
 
+            
+
             <div className="flex items-center gap-3 text-sm text-[#A25C67]">
+          <Select value={selectedStatus} onValueChange={handleStatusChange}>
+            <SelectTrigger className="h-12 w-36 rounded-2xl border border-[#F0F1F3] bg-[#F9FBFD] px-4 text-sm font-medium text-[#4F4F4F]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="rounded-2xl border border-[#F0F1F3] bg-white">
+              <SelectItem value="aktif">Promo Aktif</SelectItem>
+              <SelectItem value="archive">Promo Arsip</SelectItem>
+              <SelectItem value="all">Semua Status</SelectItem>
+            </SelectContent>
+          </Select>
               <span>Page</span>
               <Select
                 value={String(pagination.limit)}
@@ -387,7 +451,7 @@ function RouteComponent() {
                       onSort={handleSort} 
                     />
                   </TableHead>
-                  <TableHead className="w-32 text-center text-[#9C1A1C]">
+                  <TableHead className="w-36 text-center text-[#9C1A1C]">
                     Aksi
                   </TableHead>
                 </TableRow>
@@ -396,7 +460,7 @@ function RouteComponent() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="py-12 text-center text-sm text-[#6B7280]"
                     >
                       <div className="flex items-center justify-center gap-2">
@@ -408,7 +472,7 @@ function RouteComponent() {
                 ) : isError ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="py-12 text-center text-sm text-[#C1272D]"
                     >
                       Terjadi kesalahan saat memuat data promo.
@@ -421,7 +485,7 @@ function RouteComponent() {
                 ) : promos.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="py-12 text-center text-sm text-[#6B7280]"
                     >
                       Tidak ada data promo yang tersedia.
@@ -464,6 +528,28 @@ function RouteComponent() {
                               />
                             </Link>
                           </Button>
+
+                          <Button
+                            size="icon"
+                            type="button"
+                            onClick={() => handleToggleStatus(promo)}
+                            disabled={updateStatusMutation.isPending && statusTargetId === promo.id}
+                            className={`h-10 w-10 rounded-xl ${
+                              promo.status === "aktif"
+                                ? "bg-[#E0E7FF] text-[#3730A3] hover:bg-[#C7D2FE]"
+                                : "bg-[#DCFCE7] text-[#166534] hover:bg-[#BBF7D0]"
+                            }`}
+                            title={promo.status === "aktif" ? "Arsipkan Promo" : "Aktifkan Promo"}
+                          >
+                            {updateStatusMutation.isPending && statusTargetId === promo.id ? (
+                              <Loader2 className="size-4 animate-spin" />
+                            ) : promo.status === "aktif" ? (
+                              <Archive className="size-4" />
+                            ) : (
+                              <ArchiveRestore className="size-4" />
+                            )}
+                          </Button>
+
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
