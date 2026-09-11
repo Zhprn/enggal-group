@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -21,6 +22,7 @@ import { PromoListQueryDto } from 'src/api/promo/dto/requests/list.query.dto';
 import { uploadDiskStorage } from 'src/api/upload/upload.storage';
 import type { StoredFile } from 'src/api/upload/upload.types';
 import { JwtAuthGuard } from '../auth/guard/jwt-guard.auth';
+import { Status } from '@prisma/client';
 
 @ApiTags('promo')
 @Controller('promo')
@@ -113,6 +115,7 @@ export class PromoController {
       page,
       limit,
       brandId: query.brandId,
+      status: query.status,
       startDate,
       endDate,
       sortBy: query.sortBy,
@@ -184,6 +187,24 @@ export class PromoController {
       ...(files?.banner?.[0] ? { banner: `/uploads/${files.banner[0].filename}` } : {}),
     };
     return this.promoService.update(id, payload);
+  }
+
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', enum: ['aktif', 'archive'], example: 'archive' },
+      },
+      required: ['status'],
+    },
+  })
+  updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: Status,
+  ) {
+    return this.promoService.updateStatus(id, status);
   }
 
   @Delete(':id')

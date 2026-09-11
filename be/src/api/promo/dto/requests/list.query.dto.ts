@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Status } from '@prisma/client';
 
 export class PromoListQueryDto {
   @ApiPropertyOptional({ description: 'Page number (1-based)' })
@@ -19,6 +20,16 @@ export class PromoListQueryDto {
   @IsOptional()
   @IsUUID()
   brandId?: string;
+  @ApiPropertyOptional({
+    enum: Status,
+    description: 'Filter status aktif or archive',
+    example: 'aktif',
+  })
+  @IsOptional()
+  @IsEnum(Status, {
+    message: 'Status most aktif or archive',
+  })
+  status?: Status;
 
   @ApiPropertyOptional({
     description:

@@ -7,6 +7,7 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RequestPromoCreateDto } from 'src/api/promo/dto/requests/create.dto';
 import { RequestPromoUpdateDto } from 'src/api/promo/dto/requests/update.dto';
+import { Status } from '@prisma/client';
 
 @Injectable()
 export class PromoService {
@@ -39,6 +40,7 @@ export class PromoService {
         image: dto.image,
         banner: dto.banner,
         showBanner: dto.showBanner ?? false,
+        status: Status.aktif,
       },
       include: { brand: true },
     });
@@ -48,6 +50,7 @@ export class PromoService {
     page = 1,
     limit = 10,
     brandId,
+    status,
     startDate,
     endDate,
     sortBy,
@@ -56,6 +59,7 @@ export class PromoService {
     page?: number;
     limit?: number;
     brandId?: string;
+    status?: Status;
     startDate?: Date;
     endDate?: Date;
     sortBy?: string;
@@ -66,6 +70,9 @@ export class PromoService {
 
     if (brandId) {
       where.brandId = brandId;
+    }
+    if (status) {
+      where.status = status;
     }
 
     if (startDate || endDate) {
@@ -79,23 +86,30 @@ export class PromoService {
       where.berlakuHingga = berlakuHinggaFilter;
     }
 
-    // Build orderBy clause dynamically
     const orderBy: any = {};
     if (sortBy) {
-      // Handle nested brand sorting
       if (sortBy === 'brand.nama') {
         orderBy.brand = { nama: sortOrder };
       } else {
-        // Direct field sorting
-        const validSortFields = ['title', 'subtitle', 'berlakuHingga', 'description', 'syaratKetentuan', 'image', 'banner', 'showBanner'];
+        const validSortFields = [
+          'title',
+          'subtitle',
+          'status',
+          'berlakuHingga',
+          'description',
+          'syaratKetentuan',
+          'image',
+          'banner',
+          'showBanner',
+        ];
         if (validSortFields.includes(sortBy)) {
           orderBy[sortBy] = sortOrder;
         } else {
-          orderBy.berlakuHingga = 'desc'; // Fallback to default
+          orderBy.berlakuHingga = 'desc';
         }
       }
     } else {
-      orderBy.berlakuHingga = 'desc'; // Default sorting
+      orderBy.berlakuHingga = 'desc';
     }
 
     const [total, rows] = await this.prisma.$transaction([
@@ -109,6 +123,7 @@ export class PromoService {
           id: true,
           title: true,
           subtitle: true,
+          status: true,
           description: true,
           syaratKetentuan: true,
           berlakuHingga: true,
@@ -137,6 +152,7 @@ export class PromoService {
   async findBanners() {
     const promos = await this.prisma.promo.findMany({
       where: {
+        status: Status.aktif,
         showBanner: true,
         banner: { not: null },
       },
@@ -144,6 +160,7 @@ export class PromoService {
         id: true,
         title: true,
         banner: true,
+        status: true,
         berlakuHingga: true,
         brand: {
           select: { id: true, nama: true },
@@ -166,7 +183,7 @@ export class PromoService {
     return promo;
   }
 
-  async update(id: string, dto: RequestPromoUpdateDto) {
+  async update(id: string, dto: RequestPromoUpdateDto & { status?: Status }) {
     const existing = await this.prisma.promo.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException('Promo not found');
@@ -195,8 +212,26 @@ export class PromoService {
         image: dto.image ?? undefined,
         banner: dto.banner ?? undefined,
         showBanner: dto.showBanner ?? undefined,
+        status: dto.status ?? undefined,
       },
       include: { brand: true },
+    });
+  }
+
+  async updateStatus(id: string, status: Status) {
+    const existing = await this.prisma.promo.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Promo not found');
+    }
+
+    return this.prisma.promo.update({
+      where: { id },
+      data: { status },
+      include: {
+        brand: {
+          select: { id: true, nama: true },
+        },
+      },
     });
   }
 
