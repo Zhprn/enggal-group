@@ -8,9 +8,11 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBody,
@@ -123,6 +125,60 @@ export class MembershipController {
     return this.service.updateConfig(dto);
   }
 
+  @Get('export/excel')
+  async exportExcel(
+    @Query() query: MembershipListQueryDto,
+    @Res() res: Response,
+  ) {
+    let startDate = query.startDate ? new Date(query.startDate) : undefined;
+    let endDate = query.endDate ? new Date(query.endDate) : undefined;
+
+    if (startDate && Number.isNaN(startDate.getTime())) {
+      throw new BadRequestException('Invalid startDate');
+    }
+
+    if (endDate && Number.isNaN(endDate.getTime())) {
+      throw new BadRequestException('Invalid endDate');
+    }
+
+    if (startDate && !query.startDate?.includes('T')) {
+      startDate.setUTCHours(0, 0, 0, 0);
+    }
+
+    if (endDate && !query.endDate?.includes('T')) {
+      endDate.setUTCHours(23, 59, 59, 999);
+    }
+
+    if (startDate && endDate && startDate > endDate) {
+      throw new BadRequestException(
+        'startDate must be before or equal to endDate',
+      );
+    }
+
+    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc';
+
+    const buffer = await this.service.exportExcel({
+      startDate,
+      endDate,
+      sortBy: query.sortBy,
+      sortOrder,
+    });
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const filename = `data-membership-${timestamp}.xlsx`;
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"`,
+    );
+
+    res.send(buffer);
+  }
+  
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);

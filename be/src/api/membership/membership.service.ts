@@ -15,6 +15,7 @@ import { RequestMembershipUpdateDto } from 'src/api/membership/dto/requests/upda
 import { MEMBERSHIP_TEMPLATE } from './membership-template.constants';
 import type { StoredFile } from 'src/api/upload/upload.types';
 import type { MembershipTemplateConfig } from './membership-template.types';
+import { Workbook } from 'exceljs';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -409,5 +410,93 @@ export class MembershipService {
     );
 
     return newConfig;
+  }
+
+  async exportExcel({
+    startDate,
+    endDate,
+    sortBy,
+    sortOrder = 'desc',
+  }: {
+    startDate?: Date;
+    endDate?: Date;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<Buffer> {
+    const where: Prisma.MembershipWhereInput = {};
+
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = startDate;
+      }
+      if (endDate) {
+        where.createdAt.lte = endDate;
+      }
+    }
+
+    const orderBy: Prisma.MembershipOrderByWithRelationInput = {};
+    if (sortBy) {
+      const validSortFields = [
+        'createdAt',
+        'nama',
+        'membershipId',
+        'jenis_kelamin',
+        'kota',
+        'tanggal_lahir',
+        'no_hp',
+        'email',
+      ];
+      if (validSortFields.includes(sortBy)) {
+        orderBy[sortBy as keyof Prisma.MembershipOrderByWithRelationInput] = sortOrder;
+      } else {
+        orderBy.createdAt = 'desc';
+      }
+    } else {
+      orderBy.createdAt = 'desc';
+    }
+
+    const data = await this.prisma.membership.findMany({
+      where,
+      orderBy,
+    });
+
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet('Data Membership');
+
+    worksheet.columns = [
+      { header: 'No', key: 'no', width: 6 },
+      { header: 'ID Membership', key: 'membershipId', width: 20 },
+      { header: 'Nama Lengkap', key: 'nama', width: 25 },
+      { header: 'Email', key: 'email', width: 25 },
+      { header: 'No. Handphone', key: 'no_hp', width: 18 },
+      { header: 'Kota', key: 'kota', width: 18 },
+      { header: 'Jenis Kelamin', key: 'jenis_kelamin', width: 16 },
+      { header: 'Tanggal Lahir', key: 'tanggal_lahir', width: 16 },
+      { header: 'Tanggal Bergabung', key: 'createdAt', width: 20 },
+    ];
+
+    worksheet.getRow(1).font = { bold: true };
+
+    data.forEach((item, index) => {
+      worksheet.addRow({
+        no: index + 1,
+        membershipId: item.membershipId,
+        nama: item.nama,
+        email: item.email,
+        no_hp: `0${item.no_hp}`,
+        kota: item.kota,
+        jenis_kelamin: item.jenis_kelamin === 'LAKI_LAKI' ? 'Laki-laki' : 'Perempuan',
+        tanggal_lahir: item.tanggal_lahir
+          ? `${String(item.tanggal_lahir.getDate()).padStart(2, '0')}-${String(item.tanggal_lahir.getMonth() + 1).padStart(2, '0')}-${item.tanggal_lahir.getFullYear()}`
+          : '-',
+        createdAt: item.createdAt
+          ? `${String(item.createdAt.getDate()).padStart(2, '0')}-${String(item.createdAt.getMonth() + 1).padStart(2, '0')}-${item.createdAt.getFullYear()}`
+          : '-',
+      });
+    });
+
+    const arrayBuffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(arrayBuffer);
   }
 }
