@@ -6,6 +6,7 @@ import { GoogleSheetsService } from "src/common/google-sheets/google-sheets.serv
 import { GoogleDriveService } from "src/common/google-drive/google-drive.service";
 import { RequestUserCareerCreateDto } from "src/api/user-career/dto/requests/create.dto";
 import { RequestUserCareerUpdateDto } from "src/api/user-career/dto/requests/update.dto";
+import { Workbook } from 'exceljs';
 
 @Injectable()
 export class UserCareerService {
@@ -261,6 +262,188 @@ export class UserCareerService {
       this.logger.error(`Failed to delete UserCareer ${id} completely`, error);
       throw error;
     }
+  }
+
+  async exportExcel({
+    startDate,
+    endDate,
+    status,
+    sortBy,
+    sortOrder = 'desc',
+  }: {
+    startDate?: Date;
+    endDate?: Date;
+    status?: any;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<Buffer> {
+    const where: Prisma.UserCareerWhereInput = {};
+
+    if (startDate || endDate) {
+      where.tanggal = {};
+      if (startDate) {
+        where.tanggal.gte = startDate;
+      }
+      if (endDate) {
+        where.tanggal.lte = endDate;
+      }
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    const orderBy: Prisma.UserCareerOrderByWithRelationInput = {};
+    if (sortBy) {
+      const validSortFields = [
+        'tanggal',
+        'nama',
+        'no_hp',
+        'email',
+        'status',
+        'jenis_kelamin',
+        'kota',
+        'tanggal_lahir',
+      ];
+      if (validSortFields.includes(sortBy)) {
+        orderBy[sortBy as keyof Prisma.UserCareerOrderByWithRelationInput] = sortOrder;
+      } else {
+        orderBy.tanggal = 'desc';
+      }
+    } else {
+      orderBy.tanggal = 'desc';
+    }
+
+    const data = await this.prisma.userCareer.findMany({
+      where,
+      orderBy,
+    });
+
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet('Data Pelamar');
+
+    worksheet.mergeCells('A1:J1');
+    const titleRow = worksheet.getCell('A1');
+    titleRow.value = 'DATA LAPORAN PELAMAR KARIR';
+    titleRow.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FF9C1A1C' } };
+    titleRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.getRow(1).height = 30;
+
+    titleRow.border = {
+      top: { style: 'medium', color: { argb: 'FF9C1A1C' } },
+      left: { style: 'medium', color: { argb: 'FF9C1A1C' } },
+      right: { style: 'medium', color: { argb: 'FF9C1A1C' } },
+    };
+
+    worksheet.mergeCells('A2:J2');
+    const subTitleRow = worksheet.getCell('A2');
+    subTitleRow.value = `Tanggal Export: ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+    subTitleRow.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF555555' } };
+    subTitleRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.getRow(2).height = 20;
+
+    subTitleRow.border = {
+      left: { style: 'medium', color: { argb: 'FF9C1A1C' } },
+      bottom: { style: 'medium', color: { argb: 'FF9C1A1C' } },
+      right: { style: 'medium', color: { argb: 'FF9C1A1C' } },
+    };
+
+    worksheet.getRow(3).height = 10;
+
+    const headers = [
+      { header: 'NO', key: 'no', width: 8 },
+      { header: 'TANGGAL DAFTAR', key: 'tanggal', width: 18 },
+      { header: 'NAMA LENGKAP', key: 'nama', width: 28 },
+      { header: 'NO. HANDPHONE', key: 'no_hp', width: 20 },
+      { header: 'EMAIL', key: 'email', width: 28 },
+      { header: 'KOTA', key: 'kota', width: 18 },
+      { header: 'JENIS KELAMIN', key: 'jenis_kelamin', width: 16 },
+      { header: 'TANGGAL LAHIR', key: 'tanggal_lahir', width: 18 },
+      { header: 'STATUS', key: 'status', width: 16 },
+      { header: 'LINK CV', key: 'cv_link', width: 30 },
+    ];
+
+    const headerRowNumber = 4;
+    const headerRow = worksheet.getRow(headerRowNumber);
+    headerRow.height = 26;
+
+    headers.forEach((h, idx) => {
+      worksheet.getColumn(idx + 1).width = h.width;
+      const cell = headerRow.getCell(idx + 1);
+      cell.value = h.header;
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF9C1A1C' },
+      };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        bottom: { style: 'medium', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+      };
+    });
+
+    data.forEach((item, index) => {
+      const rowIndex = headerRowNumber + 1 + index;
+      const row = worksheet.getRow(rowIndex);
+      row.height = 22;
+
+      row.values = [
+        index + 1,
+        item.tanggal
+          ? `${String(item.tanggal.getDate()).padStart(2, '0')}-${String(item.tanggal.getMonth() + 1).padStart(2, '0')}-${item.tanggal.getFullYear()}`
+          : '-',
+        item.nama,
+        `0${item.no_hp}`,
+        item.email,
+        item.kota,
+        item.jenis_kelamin === 'LAKI_LAKI' ? 'Laki-laki' : 'Perempuan',
+        item.tanggal_lahir
+          ? `${String(item.tanggal_lahir.getDate()).padStart(2, '0')}-${String(item.tanggal_lahir.getMonth() + 1).padStart(2, '0')}-${item.tanggal_lahir.getFullYear()}`
+          : '-',
+        item.status,
+        item.cv_link ? 'Buka CV' : '-',
+      ];
+
+      for (let col = 1; col <= headers.length; col++) {
+        const cell = row.getCell(col);
+
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+          left: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+          bottom: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+          right: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+        };
+
+        if (index % 2 === 1) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF5F6F8' },
+          };
+        }
+
+        const centerCols = [1, 2, 4, 6, 7, 8, 9, 10];
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: centerCols.includes(col) ? 'center' : 'left',
+        };
+
+        if (col === 10 && item.cv_link) {
+          cell.value = {
+            text: 'Buka CV',
+            hyperlink: item.cv_link,
+          };
+          cell.font = { color: { argb: 'FF1A73E8' }, underline: true };
+        }
+      }
+    });
+
+    const arrayBuffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(arrayBuffer);
   }
 
   private async deleteFromGoogleSheets(dbId: string): Promise<void> {
