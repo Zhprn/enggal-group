@@ -464,36 +464,102 @@ export class MembershipService {
     const workbook = new Workbook();
     const worksheet = workbook.addWorksheet('Data Membership');
 
-    worksheet.columns = [
-      { header: 'No', key: 'no', width: 6 },
-      { header: 'ID Membership', key: 'membershipId', width: 20 },
-      { header: 'Nama Lengkap', key: 'nama', width: 25 },
-      { header: 'Email', key: 'email', width: 25 },
-      { header: 'No. Handphone', key: 'no_hp', width: 18 },
-      { header: 'Kota', key: 'kota', width: 18 },
-      { header: 'Jenis Kelamin', key: 'jenis_kelamin', width: 16 },
-      { header: 'Tanggal Lahir', key: 'tanggal_lahir', width: 16 },
-      { header: 'Tanggal Bergabung', key: 'createdAt', width: 20 },
+    worksheet.mergeCells('A1:I1');
+    const titleRow = worksheet.getCell('A1');
+    titleRow.value = 'DATA LAPORAN MEMBERSHIP';
+    titleRow.font = { name: 'Calibri', size: 16, bold: true, color: { argb: '9C1A1C' } };
+    titleRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.getRow(1).height = 30;
+
+    worksheet.mergeCells('A2:I2');
+    const subTitleRow = worksheet.getCell('A2');
+    subTitleRow.value = `Tanggal Export: ${new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+    subTitleRow.font = { name: 'Calibri', size: 10, italic: true, color: { argb: '555555' } };
+    subTitleRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    worksheet.getRow(2).height = 18;
+
+    worksheet.getRow(3).height = 10;
+
+    const headers = [
+      { header: 'NO', key: 'no', width: 8 },
+      { header: 'ID MEMBERSHIP', key: 'membershipId', width: 22 },
+      { header: 'NAMA LENGKAP', key: 'nama', width: 28 },
+      { header: 'EMAIL', key: 'email', width: 28 },
+      { header: 'NO. HANDPHONE', key: 'no_hp', width: 20 },
+      { header: 'KOTA', key: 'kota', width: 20 },
+      { header: 'JENIS KELAMIN', key: 'jenis_kelamin', width: 18 },
+      { header: 'TANGGAL LAHIR', key: 'tanggal_lahir', width: 18 },
+      { header: 'TANGGAL BERGABUNG', key: 'createdAt', width: 22 },
     ];
 
-    worksheet.getRow(1).font = { bold: true };
+    const headerRowNumber = 4;
+    const headerRow = worksheet.getRow(headerRowNumber);
+    headerRow.height = 26;
+
+    headers.forEach((h, idx) => {
+      worksheet.getColumn(idx + 1).width = h.width;
+      const cell = headerRow.getCell(idx + 1);
+      cell.value = h.header;
+      cell.font = { bold: true, color: { argb: 'FFFFFF' }, size: 11 };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '9C1A1C' },
+      };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = {
+        top: { style: 'medium', color: { argb: '000000' } },
+        left: { style: 'thin', color: { argb: 'D3D3D3' } },
+        bottom: { style: 'medium', color: { argb: '000000' } },
+        right: { style: 'thin', color: { argb: 'D3D3D3' } },
+      };
+    });
 
     data.forEach((item, index) => {
-      worksheet.addRow({
-        no: index + 1,
-        membershipId: item.membershipId,
-        nama: item.nama,
-        email: item.email,
-        no_hp: `0${item.no_hp}`,
-        kota: item.kota,
-        jenis_kelamin: item.jenis_kelamin === 'LAKI_LAKI' ? 'Laki-laki' : 'Perempuan',
-        tanggal_lahir: item.tanggal_lahir
+      const rowIndex = headerRowNumber + 1 + index;
+      const row = worksheet.getRow(rowIndex);
+      row.height = 22;
+
+      row.values = [
+        index + 1,
+        item.membershipId,
+        item.nama,
+        item.email,
+        `0${item.no_hp}`,
+        item.kota,
+        item.jenis_kelamin === 'LAKI_LAKI' ? 'Laki-laki' : 'Perempuan',
+        item.tanggal_lahir
           ? `${String(item.tanggal_lahir.getDate()).padStart(2, '0')}-${String(item.tanggal_lahir.getMonth() + 1).padStart(2, '0')}-${item.tanggal_lahir.getFullYear()}`
           : '-',
-        createdAt: item.createdAt
+        item.createdAt
           ? `${String(item.createdAt.getDate()).padStart(2, '0')}-${String(item.createdAt.getMonth() + 1).padStart(2, '0')}-${item.createdAt.getFullYear()}`
           : '-',
-      });
+      ];
+
+      for (let col = 1; col <= headers.length; col++) {
+        const cell = row.getCell(col);
+
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+          left: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+          bottom: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+          right: { style: 'thin', color: { argb: 'FFBFBFBF' } },
+        };
+
+        if (index % 2 === 1) {
+          cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF5F6F8' },
+          };
+        }
+
+        const centerCols = [1, 2, 5, 7, 8, 9];
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: centerCols.includes(col) ? 'center' : 'left',
+        };
+      }
     });
 
     const arrayBuffer = await workbook.xlsx.writeBuffer();
