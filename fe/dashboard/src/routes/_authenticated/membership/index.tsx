@@ -1,7 +1,19 @@
 import * as React from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Calendar as CalendarIcon, Loader2, Search, Trash2, Upload, Eye, UploadCloud, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Loader2,
+  Search,
+  Trash2,
+  Upload,
+  Eye,
+  UploadCloud,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  FileSpreadsheet,
+} from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
@@ -39,7 +51,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { apiClient } from "@/lib/api-client";
+import { API_BASE_URL, apiClient } from "@/lib/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Users from "@/assets/icons/jumlahusercareer.svg";
@@ -138,6 +150,46 @@ async function fetchMemberships({
       limit: meta.limit ?? limit,
     },
   };
+}
+
+async function downloadMembershipExcel(params?: {
+  startDate?: string;
+  endDate?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}) {
+  const query = new URLSearchParams();
+  if (params?.startDate) query.set("startDate", params.startDate);
+  if (params?.endDate) query.set("endDate", params.endDate);
+  if (params?.sortBy) query.set("sortBy", params.sortBy);
+  if (params?.sortOrder) query.set("sortOrder", params.sortOrder);
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
+
+  const response = await fetch(`${API_BASE_URL}/membership/export/excel?${query.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Gagal mengunduh file Excel membership.");
+  }
+
+  const blob = await response.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.setAttribute(
+    "download",
+    `data-membership-${new Date().toISOString().slice(0, 10)}.xlsx`,
+  );
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(downloadUrl);
 }
 
 async function fetchTemplate() {
@@ -516,7 +568,6 @@ function TemplateManagementDialog() {
     }
   };
 
-
   const handleSaveConfig = async () => {
     const uploadPromises: Promise<unknown>[] = [];
 
@@ -812,6 +863,7 @@ function RouteComponent() {
   const [pagination, setPagination] = React.useState({ page: 1, limit: 15 });
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
   const [sortConfig, setSortConfig] = React.useState<{ sortBy: string; sortOrder: 'asc' | 'desc' }>({ sortBy: 'createdAt', sortOrder: 'desc' });
+  const [isExporting, setIsExporting] = React.useState(false);
 
   const {
     data: dashboardStats,
@@ -893,13 +945,28 @@ function RouteComponent() {
   const handleSort = (column: string) => {
     setSortConfig((prev) => {
       if (prev.sortBy === column) {
-        // Toggle sort order if same column
         return { sortBy: column, sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' };
       }
-      // New column, default to ascending
       return { sortBy: column, sortOrder: 'asc' };
     });
     setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      await downloadMembershipExcel({
+        startDate: startDateParam,
+        endDate: endDateParam,
+        sortBy: sortConfig.sortBy,
+        sortOrder: sortConfig.sortOrder,
+      });
+      toast.success("Data membership berhasil diekspor ke Excel.");
+    } catch (err) {
+      toast.error((err as Error)?.message || "Gagal mengekspor file Excel.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const membershipStats = React.useMemo(
@@ -961,7 +1028,26 @@ function RouteComponent() {
           <h2 className="text-xl font-semibold text-[#9C1A1C]">
             Daftar Membership
           </h2>
-          <div className="flex gap-3 flex-shrink-0">
+          <div className="flex gap-3 flex-shrink-0 items-center">
+            <Button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={isExporting || isLoading}
+              className="h-12 rounded-2xl border border-[#F0F1F3] bg-[#F9FBFD] px-5 text-sm font-semibold text-[#4F4F4F] hover:bg-[#f1f3f7]"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Mengekspor...
+                </>
+              ) : (
+                <>
+                  <FileSpreadsheet className="mr-2 size-4 text-[#A25C67]" />
+                  Export Excel
+                </>
+              )}
+            </Button>
+
             <TemplateManagementDialog />
             <Popover>
               <PopoverTrigger asChild>

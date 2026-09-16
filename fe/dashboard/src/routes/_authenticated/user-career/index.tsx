@@ -1,7 +1,17 @@
 import * as React from "react";
 
 import { createFileRoute } from "@tanstack/react-router";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, Search, MoreHorizontal, Trash2, ArrowUpDown } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Search,
+  MoreHorizontal,
+  Trash2,
+  ArrowUpDown,
+  FileSpreadsheet,
+} from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
@@ -38,7 +48,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { apiClient } from "@/lib/api-client";
+import { API_BASE_URL, apiClient } from "@/lib/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -135,7 +145,47 @@ async function fetchUserCareers({
   };
 }
 
+async function downloadUserCareerExcel(params?: {
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}) {
+  const query = new URLSearchParams();
+  if (params?.startDate) query.set("startDate", params.startDate);
+  if (params?.endDate) query.set("endDate", params.endDate);
+  if (params?.status && params.status !== "ALL") query.set("status", params.status);
+  if (params?.sortBy) query.set("sortBy", params.sortBy);
+  if (params?.sortOrder) query.set("sortOrder", params.sortOrder);
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
+
+  const response = await fetch(`${API_BASE_URL}/user-career/export/excel?${query.toString()}`, {
+    method: "GET",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Gagal mengunduh file Excel pelamar karir.");
+  }
+
+  const blob = await response.blob();
+  const downloadUrl = window.URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.setAttribute(
+    "download",
+    `data-pelamar-${new Date().toISOString().slice(0, 10)}.xlsx`,
+  );
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(downloadUrl);
+}
 
 function formatDisplayDate(date?: string) {
   if (!date) {
@@ -338,6 +388,7 @@ function RouteComponent() {
   const [pagination, setPagination] = React.useState({ page: 1, limit: 15 });
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
   const [sortConfig, setSortConfig] = React.useState<{ sortBy: string; sortOrder: 'asc' | 'desc' }>({ sortBy: 'tanggal', sortOrder: 'desc' });
+  const [isExporting, setIsExporting] = React.useState(false);
 
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
 
@@ -382,7 +433,6 @@ function RouteComponent() {
       return apiClient.put(`/user-career/${id}`, { status });
     },
     onSuccess: () => {
-      // Invalidate all user-careers queries to refetch the latest data
       queryClient.invalidateQueries({ queryKey: ["user-careers"] });
     },
   });
@@ -392,7 +442,6 @@ function RouteComponent() {
       return apiClient.delete(`/user-career/${id}`);
     },
     onSuccess: () => {
-      // Invalidate all user-careers queries to refetch the latest data
       queryClient.invalidateQueries({ queryKey: ["user-careers"] });
     },
   });
@@ -425,53 +474,90 @@ function RouteComponent() {
   const handleSort = (column: string) => {
     setSortConfig((prev) => {
       if (prev.sortBy === column) {
-        // Toggle sort order if same column
         return { sortBy: column, sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc' };
       }
-      // New column, default to ascending
       return { sortBy: column, sortOrder: 'asc' };
     });
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      await downloadUserCareerExcel({
+        startDate: startDateParam,
+        endDate: endDateParam,
+        status: statusFilter,
+        sortBy: sortConfig.sortBy,
+        sortOrder: sortConfig.sortOrder,
+      });
+      toast.success("Data pelamar berhasil diekspor ke Excel.");
+    } catch (err) {
+      toast.error((err as Error)?.message || "Gagal mengekspor file Excel.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between">
+      <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-[#9C1A1C]">
           Daftar User Career
         </h1>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12 rounded-2xl border border-[#F0F1F3] bg-[#F9FBFD] px-4 text-sm font-medium text-[#4F4F4F] hover:bg-[#f1f3f7]"
-            >
-              <CalendarIcon className="mr-2 size-4 text-[#A25C67]" />
-              {dateRange?.from && dateRange?.to
-                ? `${format(dateRange.from, "MMM dd yyyy")} - ${format(
-                  dateRange.to,
-                  "MMM dd yyyy",
-                )}`
-                : dateRange?.from
-                  ? `${format(dateRange.from, "MMM dd yyyy")} - …`
-                  : "Pilih Rentang Tanggal"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-auto rounded-2xl border border-[#F0F1F3] bg-white p-4"
-            align="end"
+        <div className="flex items-center gap-4">
+          <Button
+            type="button"
+            onClick={handleExportExcel}
+            disabled={isExporting || isLoading}
+            className="h-12 rounded-2xl bg-[#F9FBFD] px-5 text-sm font-semibold border border-[#F0F1F3] text-[#4F4F4F]  hover:bg-[#f1f3f7]"
           >
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange?.from ?? dateRange?.to ?? new Date()}
-              selected={dateRange}
-              onSelect={handleDateRangeChange}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
+            {isExporting ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Mengekspor...
+              </>
+            ) : (
+              <>
+                <FileSpreadsheet className="mr-2 size-4 text-[#A25C67]" />
+                Export Excel
+              </>
+            )}
+          </Button>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-12 rounded-2xl border border-[#F0F1F3] bg-[#F9FBFD] px-4 text-sm font-medium text-[#4F4F4F] hover:bg-[#f1f3f7]"
+              >
+                <CalendarIcon className="mr-2 size-4 text-[#A25C67]" />
+                {dateRange?.from && dateRange?.to
+                  ? `${format(dateRange.from, "MMM dd yyyy")} - ${format(
+                    dateRange.to,
+                    "MMM dd yyyy",
+                  )}`
+                  : dateRange?.from
+                    ? `${format(dateRange.from, "MMM dd yyyy")} - …`
+                    : "Pilih Rentang Tanggal"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto rounded-2xl border border-[#F0F1F3] bg-white p-4"
+              align="end"
+            >
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from ?? dateRange?.to ?? new Date()}
+                selected={dateRange}
+                onSelect={handleDateRangeChange}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
       <Card className="border-none shadow-sm">
         <CardContent className="space-y-6 p-6">
@@ -693,7 +779,7 @@ function RouteComponent() {
                                 });
                               } catch (error) {
                                 console.error('Failed to update status:', error);
-                                throw error; // Re-throw to be caught by StatusActions
+                                throw error;
                               }
                             }}
                           />
@@ -784,4 +870,3 @@ function RouteComponent() {
     </div>
   );
 }
-
