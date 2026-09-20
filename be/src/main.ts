@@ -7,11 +7,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from 'src/logging/logging.interceptor';
 import { TransformInterceptor } from 'src/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from 'src/filters/http-exception.filter';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'node:path';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create(AppModule);
+
   app.enableCors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -27,15 +26,19 @@ async function bootstrap() {
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
     }),
   );
-  app.useGlobalInterceptors(new LoggingInterceptor());
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads/',
-  });
+
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new TransformInterceptor(),
+  );
+
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const config = new DocumentBuilder()
     .setTitle('EnggalGroup API')
@@ -51,7 +54,11 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  writeFileSync('./swagger-spec.json', JSON.stringify(document));
+
+  try {
+    writeFileSync('./swagger-spec.json', JSON.stringify(document));
+  } catch (e) {}
+
   SwaggerModule.setup('api', app, document);
 
   app.use(
@@ -64,9 +71,8 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalInterceptors(new TransformInterceptor());
-  app.useGlobalFilters(new HttpExceptionFilter());
-  await app.listen(3055);
+  const port = process.env.PORT || 3055;
+  await app.listen(port);
 }
 
 bootstrap();

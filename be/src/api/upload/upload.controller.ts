@@ -1,19 +1,14 @@
 import {
   BadRequestException,
   Controller,
-  Get,
-  Param,
   Post,
   UploadedFile,
   UseInterceptors,
-  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { UploadService } from 'src/api/upload/upload.service';
-import { Response } from 'express';
-import type { StoredFile } from 'src/api/upload/upload.types';
-import { uploadDiskStorage } from 'src/api/upload/upload.storage';
+import { uploadMemoryStorage } from 'src/api/upload/upload.storage';
 
 @ApiTags('upload')
 @Controller('upload')
@@ -21,7 +16,7 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file', { storage: uploadDiskStorage }))
+  @UseInterceptors(FileInterceptor('file', { storage: uploadMemoryStorage }))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -35,16 +30,10 @@ export class UploadController {
       required: ['file'],
     },
   })
-  upload(@UploadedFile() file: StoredFile) {
+  async upload(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
-    return this.uploadService.buildFileResponse(file);
-  }
-
-  @Get(':filename')
-  serve(@Param('filename') filename: string, @Res() res: Response) {
-    const filePath = this.uploadService.resolveFilePath(filename);
-    res.sendFile(filePath);
+    return this.uploadService.uploadToR2(file);
   }
 }

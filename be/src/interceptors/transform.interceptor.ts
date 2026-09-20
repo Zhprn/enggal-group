@@ -14,6 +14,43 @@ export interface Response<T = unknown> {
   meta?: unknown;
 }
 
+function formatImageUrl(value: any): any {
+  if (!value) return value;
+
+  if (Array.isArray(value)) {
+    return value.map((item) => formatImageUrl(item));
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    if (value instanceof Date || Buffer.isBuffer(value)) {
+      return value;
+    }
+    const formattedObj: Record<string, any> = {};
+    for (const key of Object.keys(value)) {
+      formattedObj[key] = formatImageUrl(value[key]);
+    }
+    return formattedObj;
+  }
+
+  if (typeof value === 'string') {
+    const isImageFile = /\.(png|jpe?g|webp|gif|svg)$/i.test(value);
+    const isUploadPath = value.startsWith('/uploads/') || value.startsWith('uploads/');
+
+    if (isImageFile || isUploadPath) {
+      if (value.startsWith('http://') || value.startsWith('https://')) {
+        return value;
+      }
+
+      const cleanFilename = value.replace(/^\/?(uploads\/)?/, '');
+      const baseUrl = (process.env.R2_PUBLIC_URL).replace(/\/+$/, '');
+
+      return `${baseUrl}/uploads/${cleanFilename}`;
+    }
+  }
+
+  return value;
+}
+
 @Injectable()
 export class TransformInterceptor
   implements NestInterceptor<unknown, Response<unknown>>
@@ -45,7 +82,7 @@ export class TransformInterceptor
           return {
             statusCode: response.statusCode,
             message: message ?? 'Success',
-            data: innerData,
+            data: formatImageUrl(innerData),
             meta,
           };
         }
@@ -53,7 +90,7 @@ export class TransformInterceptor
         return {
           statusCode: response.statusCode,
           message: 'Success',
-          data,
+          data: formatImageUrl(data),
         };
       }),
     );
