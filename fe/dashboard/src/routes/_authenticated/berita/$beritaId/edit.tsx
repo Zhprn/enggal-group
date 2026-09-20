@@ -262,7 +262,7 @@ function RouteComponent() {
             <div className="space-y-4">
               <div className="relative rounded-3xl border border-[#D6DAE1] bg-[#F9FBFD] p-4">
                 <img
-                  src={`${import.meta.env.VITE_API_BASE_URL}${imagePreviewUrl}`}
+                  src={`${imagePreviewUrl}`}
                   alt="Preview"
                   className="mx-auto max-h-96 rounded-2xl object-contain"
                 />

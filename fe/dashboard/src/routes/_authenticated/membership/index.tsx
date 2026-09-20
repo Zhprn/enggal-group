@@ -166,7 +166,7 @@ async function downloadMembershipExcel(params?: {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
 
-  const response = await fetch(`${API_BASE_URL}/membership/export/excel?${query.toString()}`, {
+  const response = await fetch(`/membership/export/excel?${query.toString()}`, {
     method: "GET",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -384,7 +384,7 @@ function PreviewButton({
                 {template?.data?.frontImage ? (
                   <>
                     <img
-                      src={`${import.meta.env.VITE_API_BASE_URL}${template.data.frontImage}?t=${timestamp}`}
+                      src={`${template.data.frontImage}?t=${timestamp}`}
                       alt="Template Depan"
                       className="w-full h-full object-cover"
                     />
@@ -436,7 +436,7 @@ function PreviewButton({
               >
                 {template?.data?.backImage ? (
                   <img
-                    src={`${import.meta.env.VITE_API_BASE_URL}${template.data.backImage}?t=${timestamp}`}
+                    src={`${template.data.backImage}?t=${timestamp}`}
                     alt="Template Belakang"
                     className="w-full h-full object-cover"
                   />
@@ -633,7 +633,7 @@ function TemplateManagementDialog() {
                       />
                     ) : template?.data?.frontImage ? (
                       <img
-                        src={`${import.meta.env.VITE_API_BASE_URL}${template.data.frontImage}`}
+                        src={`${template.data.frontImage}`}
                         alt="Template Depan"
                         className="max-h-full max-w-full object-cover"
                       />
@@ -675,7 +675,7 @@ function TemplateManagementDialog() {
                       />
                     ) : template?.data?.backImage ? (
                       <img
-                        src={`${import.meta.env.VITE_API_BASE_URL}${template.data.backImage}`}
+                        src={`${template.data.backImage}`}
                         alt="Template Belakang"
                         className="max-h-full max-w-full object-cover"
                       />
@@ -756,7 +756,7 @@ function TemplateManagementDialog() {
                     {template?.data?.frontImage ? (
                       <>
                         <img
-                          src={`${import.meta.env.VITE_API_BASE_URL}${template.data.frontImage}?t=${timestamp}`}
+                          src={`${template.data.frontImage}?t=${timestamp}`}
                           alt="Template Depan Preview"
                           className="w-full h-full object-cover"
                         />
@@ -808,7 +808,7 @@ function TemplateManagementDialog() {
                   >
                     {template?.data?.backImage ? (
                       <img
-                        src={`${import.meta.env.VITE_API_BASE_URL}${template.data.backImage}?t=${timestamp}`}
+                        src={`${template.data.backImage}?t=${timestamp}`}
                         alt="Template Belakang Preview"
                         className="w-full h-full object-cover"
                       />

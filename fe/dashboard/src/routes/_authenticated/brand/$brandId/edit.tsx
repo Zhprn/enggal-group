@@ -625,7 +625,7 @@ function RouteComponent() {
                                         <img
                                             src={
                                                 selectedLogoPreviewUrl ||
-                                                `${import.meta.env.VITE_API_BASE_URL}${brand.logo}`
+                                                `${brand.logo}`
                                             }
                                             alt="Current logo"
                                             className="mx-auto h-48 w-48 rounded-full object-contain"
@@ -704,7 +704,7 @@ function RouteComponent() {
                                         <img
                                             src={
                                                 selectedCoverImagePreviewUrl ||
-                                                `${import.meta.env.VITE_API_BASE_URL}${brand.coverImage}`
+                                                `${brand.coverImage}`
                                             }
                                             alt="Current cover"
                                             className="mx-auto max-h-96 rounded-2xl object-contain"
@@ -921,7 +921,7 @@ function RouteComponent() {
                                         className="group relative overflow-hidden rounded-xl border border-[#D6DAE1] bg-white"
                                     >
                                         <img
-                                            src={`${import.meta.env.VITE_API_BASE_URL}${gallery.image}`}
+                                            src={`${gallery.image}`}
                                             alt={gallery.caption}
                                             className="aspect-square w-full object-cover"
                                         />
@@ -1133,7 +1133,7 @@ function RouteComponent() {
                                             src={
                                                 editGalleryPreviewUrl
                                                     ? editGalleryPreviewUrl
-                                                    : `${import.meta.env.VITE_API_BASE_URL}${editingGallery.image}`
+                                                    : `${editingGallery.image}`
                                             }
                                             alt={
                                                 editGalleryPreviewUrl

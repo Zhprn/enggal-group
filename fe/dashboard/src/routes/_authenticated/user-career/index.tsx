@@ -161,7 +161,7 @@ async function downloadUserCareerExcel(params?: {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
 
-  const response = await fetch(`${API_BASE_URL}/user-career/export/excel?${query.toString()}`, {
+  const response = await fetch(`/user-career/export/excel?${query.toString()}`, {
     method: "GET",
     headers: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

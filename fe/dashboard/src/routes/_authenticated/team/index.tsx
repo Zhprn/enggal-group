@@ -301,7 +301,7 @@ function RouteComponent() {
                       </TableCell>
                       <TableCell>
                         <img
-                          src={`${import.meta.env.VITE_API_BASE_URL}${team.image}`}
+                          src={`${team.image}`}
                           alt={team.nama}
                           className="h-12 w-12 rounded-full object-cover"
                         />

@@ -297,7 +297,7 @@ function RouteComponent() {
                       </TableCell>
                       <TableCell>
                         <img
-                          src={`${import.meta.env.VITE_API_BASE_URL}${brand.logo}`}
+                          src={brand.logo}
                           className="flex h-12 w-12 items-center justify-center rounded-full object-contain object-center bg-[#FFF3E0]"
                         />
                       </TableCell>
