@@ -60,7 +60,7 @@ function getImageUrl(path?: string | null) {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE_URL}${normalizedPath}`;
+  return `${normalizedPath}`;
 }
 
 function getExcerpt(text: string, maxLength = 140) {

@@ -90,7 +90,7 @@ function getImageUrl(path?: string | null) {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE_URL}${normalizedPath}`;
+  return `${normalizedPath}`;
 }
 
 function getExcerpt(text: string, maxLength = 140) {
@@ -634,7 +634,7 @@ function BeritaDetail() {
                         className="flex gap-4 py-4 first:pt-0 last:pb-0"
                       >
                         <img
-                          src={`${API_BASE_URL}${promo.image}`}
+                          src={`${promo.image}`}
                           alt={promo.title}
                           className="h-[80px] w-[60px] rounded-lg object-cover"
                         />

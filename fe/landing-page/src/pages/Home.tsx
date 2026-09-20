@@ -233,8 +233,8 @@ function Home() {
     (brandsData?.data?.map((brand) => ({
       id: brand.id,
       name: brand.nama,
-      logo: `${API_BASE_URL}${brand.logo}`,
-      coverImage: brand.coverImage ? `${API_BASE_URL}${brand.coverImage}` : undefined,
+      logo: `${brand.logo}`,
+      coverImage: brand.coverImage ? `${brand.coverImage}` : undefined,
       alt: brand.nama,
       description: brand.description,
     })).slice(0, 12)) || []
@@ -452,30 +452,30 @@ function Home() {
           </div>
         </div>
         <div className="bg-white border border-[#D9D9D9] rounded-md w-1/2 overflow-hidden h-[650px] hidden md:block">
-          <div className="grid grid-cols-4 grid-rows-5 h-full rounded-md overflow-hidden">
+          <div className="grid grid-cols-12 grid-rows-5 h-full rounded-md overflow-hidden">
             {/* Row 1 - Brand Logos */}
-            <div className="border border-gray-100 flex items-center justify-center p-4">
+            <div className="col-span-3 border border-gray-100 flex items-center justify-center p-4">
               <img
                 src="/images/logo_navbar.png"
                 className="max-w-[80%] max-h-[80%] object-contain"
                 alt="Enggal Group Indonesia"
               />
             </div>
-            <div className="border border-gray-100 flex items-center justify-center p-4">
+            <div className="col-span-3 border border-gray-100 flex items-center justify-center p-4">
               <img
                 src="/images/enhaii.png"
                 className="max-w-[80%] max-h-[80%] object-contain"
                 alt="Enhaii"
               />
             </div>
-            <div className="border border-gray-100 flex items-center justify-center p-4">
+            <div className="col-span-3 border border-gray-100 flex items-center justify-center p-4">
               <img
                 src="/images/bakso_raja.png"
                 className="max-w-[80%] max-h-[80%] object-contain"
                 alt="Bakso Raja"
               />
             </div>
-            <div className="border border-gray-100 flex items-center justify-center p-4">
+            <div className="col-span-3 border border-gray-100 flex items-center justify-center p-4">
               <img
                 src="/images/bakso_malang.png"
                 className="max-w-[80%] max-h-[80%] object-contain"
@@ -484,28 +484,28 @@ function Home() {
             </div>
 
             {/* Row 2 - Food Images */}
-            <div className="col-span-1">
+            <div className="col-span-3">
               <img
                 src="/images/hero_1.webp"
                 className="w-full h-full object-cover"
                 alt="Food 1"
               />
             </div>
-            <div className="col-span-1">
+            <div className="col-span-3">
               <img
                 src="/images/hero_2.webp"
                 className="w-full h-full object-cover"
                 alt="Food 2"
               />
             </div>
-            <div className="col-span-1">
+            <div className="col-span-3">
               <img
                 src="/images/hero_3.webp"
                 className="w-full h-full object-cover"
                 alt="Food 3"
               />
             </div>
-            <div className="col-span-1">
+            <div className="col-span-3">
               <img
                 src="/images/hero_4.webp"
                 className="w-full h-full object-cover"
@@ -514,58 +514,51 @@ function Home() {
             </div>
 
             {/* Row 3 - Brand Logos */}
-            <div className="border border-gray-100 flex items-center justify-center p-4">
+            <div className="col-span-4 border border-gray-100 flex items-center justify-center p-4">
               <img
                 src="/images/warung_kondang.svg"
                 className="max-w-[80%] max-h-[80%] object-contain"
                 alt="Warung Kondang"
               />
             </div>
-            <div className="border border-gray-100 flex items-center justify-center p-4">
+            <div className="col-span-4 border border-gray-100 flex items-center justify-center p-4">
               <img
                 src="/images/warkop_agam.png"
                 className="max-w-[80%] max-h-[80%] object-contain"
                 alt="Warkop Agam"
               />
             </div>
-            <div className="border border-gray-100 flex items-center justify-center p-4">
+            <div className="col-span-4 border border-gray-100 flex items-center justify-center p-4">
               <img
                 src="/images/bebek_sawahan.png"
                 className="max-w-[80%] max-h-[80%] object-contain"
                 alt="bebek sawahan"
               />
             </div>
-            <div className="border border-gray-100 flex items-center justify-center p-4">
-              <img
-                src="/images/kebab_zabab.png"
-                className="max-w-[80%] max-h-[80%] object-contain"
-                alt="Kebab zabab"
-              />
-            </div>
 
             {/* Row 4 - Food Images */}
-            <div className="col-span-1">
+            <div className="col-span-3">
               <img
                 src="/images/hero_5.webp"
                 className="w-full h-full object-cover"
                 alt="Food 5"
               />
             </div>
-            <div className="col-span-1">
+            <div className="col-span-3">
               <img
                 src="/images/hero_6.webp"
                 className="w-full h-full object-cover"
                 alt="Food 6"
               />
             </div>
-            <div className="col-span-1">
+            <div className="col-span-3">
               <img
                 src="/images/hero_7.webp"
                 className="w-full h-full object-cover"
                 alt="Food 7"
               />
             </div>
-            <div className="col-span-1">
+            <div className="col-span-3">
               <img
                 src="/images/hero_8.webp"
                 className="w-full h-full object-cover"
@@ -573,31 +566,22 @@ function Home() {
               />
             </div>
 
-            <div className="col-span-1 flex items-center justify-center p-4">
-              <img
-                src="images/yongbengkalis.png"
-                className="max-w-[80%] max-h-[80%] object-contain"
-                alt="placeholder"
-              />
-            </div>
-            <div className="border border-gray-100 flex items-center justify-center p-4">
+            <div className="col-span-4 border border-gray-100 flex items-center justify-center p-4">
               <img
                 src={placeholderImage}
                 className="max-w-[80%] max-h-[80%] object-contain"
                 alt="placeholder"
               />
             </div>
-            <div className=" p-4 flex flex-col items-start justify-center bg-[#FFB835]">
+            <div className="col-span-4 p-4 flex flex-col items-start justify-center bg-[#FFB835]">
               <span className="text-[#A71D28] text-4xl font-bold leading-none">
                 2008
               </span>
               <span className="text-[#A71D28] mt-1 text-sm">Est</span>
             </div>
-            <div className="p-4 flex flex-col items-start justify-center bg-[#A71D28] text-[#FFB835]">
+            <div className="col-span-4 p-4 flex flex-col items-start justify-center bg-[#A71D28] text-[#FFB835]">
               <span className="text-4xl font-bold leading-none flex gap-x-1">
-                <span>
-                  {dashboardCounts?.totalBrand ?? 8}
-                </span>
+                <span>{dashboardCounts?.totalBrand ?? 8}</span>
                 <svg
                   width="18"
                   height="18"
@@ -670,7 +654,7 @@ function Home() {
             </motion.div>
             <motion.div whileInView={{ opacity: 1, transition: { duration: 0.5 } }} initial={{ opacity: 0 }} className="flex items-end justify-center h-full">
               <img
-                src={ceoData?.image ? `${API_BASE_URL}${ceoData.image}` : "/images/ceo.png"}
+                src={ceoData?.image ? `${ceoData.image}` : "/images/ceo.png"}
                 alt={ceoData?.nama ? `${ceoData.nama} - ${ceoData.title}` : "Enggal Group CEO"}
                 className="relative z-10 h-full w-auto object-cover"
               />
@@ -1371,7 +1355,7 @@ function Home() {
                   {/* Image Section */}
                   <div className="w-full sm:w-1/3 h-48 sm:h-auto px-3 py-4 sm:px-4 sm:py-6">
                     <img
-                      src={`${API_BASE_URL}${outlet.image}`}
+                      src={`${outlet.image}`}
                       alt={outlet.nama}
                       className="w-full h-full object-cover rounded-md"
                       onError={(e) => {
@@ -1538,7 +1522,7 @@ function Home() {
                 id={member.id}
                 name={member.nama}
                 position={member.title}
-                image={`${API_BASE_URL}${member.image}`}
+                image={`${member.image}`}
                 linkedinUrl={member.linkedinUrl}
                 instagramUrl={member.instagramUrl}
               />

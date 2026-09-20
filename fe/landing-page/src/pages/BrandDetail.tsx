@@ -124,7 +124,7 @@ function BrandDetail() {
   }
 
   const galleryImages = galleries?.map((gallery) => ({
-    src: `${API_BASE_URL}${gallery.image}`,
+    src: `${gallery.image}`,
     alt: gallery.caption || brand.nama,
     instagramUrl: gallery.instagramUrl,
   })) || [];
@@ -164,7 +164,7 @@ function BrandDetail() {
             {/* Logo */}
             <div className="mb-8">
               <div className="w-[150px] sm:w-[180px] md:w-[200px] mb-6">
-                <img src={`${API_BASE_URL}${brand.logo}`} alt={`${brand.nama} Logo`} className="w-full h-auto" />
+                <img src={`${brand.logo}`} alt={`${brand.nama} Logo`} className="w-full h-auto" />
               </div>
 
 
@@ -234,7 +234,7 @@ function BrandDetail() {
           {/* Right Image */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-sm h-[300px] lg:h-auto">
             <img
-              src={brand.coverImage ? `${API_BASE_URL}${brand.coverImage}` : "/images/brand_image.jpg"}
+              src={brand.coverImage ? `${brand.coverImage}` : "/images/brand_image.jpg"}
               alt={brand.nama}
               className="h-full w-full object-cover"
             />
@@ -348,7 +348,7 @@ function BrandDetail() {
                 <div key={outlet.id} className="bg-white rounded-2xl p-6 shadow-sm">
                   <div className="mb-6">
                     <img
-                      src={`${API_BASE_URL}${outlet.image}`}
+                      src={`${outlet.image}`}
                       alt={outlet.nama}
                       className="w-1/3 h-48 object-cover rounded-xl"
                     />

@@ -416,7 +416,7 @@ const IndonesiaMap: React.FC<IndonesiaMapProps> = ({
                     <rect x="-70" y="-65" width="140" height="70" rx="6" />
                   </clipPath>
                   <image
-                    href={outlets.length > 0 ? `${API_BASE_URL}${outlets[0].image}` : "/images/2008.jpg"}
+                    href={outlets.length > 0 ? `${outlets[0].image}` : "/images/2008.jpg"}
                     x="-70"
                     y="-65"
                     width="140"
