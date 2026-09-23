@@ -80,6 +80,8 @@ function formatDateTime(value: string) {
   return hasExplicitTime ? `${datePart}` : datePart;
 }
 
+const API_IMAGE_BASE = "https://api.enggalgroup.id";
+
 function getImageUrl(path?: string | null) {
   if (!path) {
     return "/images/berita_1.png";
@@ -90,7 +92,11 @@ function getImageUrl(path?: string | null) {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedPath}`;
+  return `${API_IMAGE_BASE}${normalizedPath}`;
+}
+
+function getAbsoluteImageUrl(path?: string | null) {
+  return getImageUrl(path);
 }
 
 function getExcerpt(text: string, maxLength = 140) {
@@ -148,12 +154,22 @@ function BeritaDetail() {
     queryFn: fetchPromoHighlights,
   });
 
-  // SEO Meta Tags
+  const siteOrigin =
+    typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : "https://www.enggalgroup.id";
+
+  const absoluteImageUrl = berita
+    ? getAbsoluteImageUrl(berita.image)
+    : undefined;
+
+  const fullArticleUrl = slug ? `${siteOrigin}/berita/${slug}` : undefined;
+
   useSeoMeta({
     title: berita?.judul,
     description: berita ? getExcerpt(berita.content, 160) : undefined,
-    image: berita ? getImageUrl(berita.image) : undefined,
-    url: slug ? `/berita/${slug}` : undefined,
+    image: absoluteImageUrl,
+    url: fullArticleUrl,
     publishedTime: berita?.createdDate,
     author: berita?.penulis || "Enggal Group",
     keywords: "berita, enggal group, berita terbaru, berita terkini",
@@ -634,7 +650,7 @@ function BeritaDetail() {
                         className="flex gap-4 py-4 first:pt-0 last:pb-0"
                       >
                         <img
-                          src={`${promo.image}`}
+                          src={`${API_BASE_URL}${promo.image}`}
                           alt={promo.title}
                           className="h-[80px] w-[60px] rounded-lg object-cover"
                         />

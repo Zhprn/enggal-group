@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient, API_BASE_URL } from "../lib/api-client";
 
@@ -18,9 +19,9 @@ type BeritaListMeta = {
   totalPages?: number;
 };
 
-async function fetchBeritaList() {
+async function fetchBeritaList(page: number, limit: number) {
   const response = await apiClient.get<BeritaItem[], BeritaListMeta>(
-    `/berita?page=1&limit=12`,
+    `/berita?page=${page}&limit=${limit}`,
   );
 
   const items = response.data ?? [];
@@ -29,10 +30,10 @@ async function fetchBeritaList() {
   return {
     data: items,
     meta: {
-      page: meta.page ?? 1,
-      limit: meta.limit ?? items.length,
+      page: meta.page ?? page,
+      limit: meta.limit ?? limit,
       total: meta.total ?? items.length,
-      totalPages: meta.totalPages ?? (items.length === 0 ? 0 : 1),
+      totalPages: meta.totalPages ?? (items.length === 0 ? 0 : Math.ceil((meta.total ?? items.length) / limit)),
     },
   };
 }
@@ -60,7 +61,7 @@ function getImageUrl(path?: string | null) {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedPath}`;
+  return `${API_BASE_URL}${normalizedPath}`;
 }
 
 function getExcerpt(text: string, maxLength = 140) {
@@ -78,12 +79,18 @@ function getExcerpt(text: string, maxLength = 140) {
 }
 
 function Berita() {
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(12);
+
   const { data: beritaList, isLoading, isError, error } = useQuery({
-    queryKey: ["berita", "list"],
-    queryFn: fetchBeritaList,
+    queryKey: ["berita", "list", page, limit],
+    queryFn: () => fetchBeritaList(page, limit),
   });
 
   const items = beritaList?.data ?? [];
+  const meta = beritaList?.meta;
+  const totalPages = meta?.totalPages ?? 1;
+
   const heroBerita = items[0];
   const sidebarArticles = items.slice(1, 4);
   const gridArticles = items.slice(4);
@@ -97,6 +104,17 @@ function Berita() {
     }
 
     window.location.href = `/berita/${slug}`;
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLimit(Number(e.target.value));
+    setPage(1);
   };
 
   return (
@@ -289,30 +307,99 @@ function Berita() {
         </div>
 
         <div>
-          <div>
-            <div className="mb-2">
-              <svg
-                width="67"
-                height="19"
-                viewBox="0 0 67 19"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M2 16.0267C11 9.36005 28.5 -2.17329 26.5 5.02671C24.5 12.2267 21 15.36 19.5 16.0267C27.3333 9.6934 42.7 -1.37323 41.5 5.02671C40.3 11.4267 37.6667 15.0267 36.5 16.0267C45.8333 8.69338 63.6 -3.77329 60 5.02671C56.4 13.8267 61.5 16.0267 64.5 16.0267"
-                  stroke="#FFB835"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                />
-              </svg>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200 pb-4 mb-6">
+            <div>
+              <div className="mb-2">
+                <svg
+                  width="67"
+                  height="19"
+                  viewBox="0 0 67 19"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2 16.0267C11 9.36005 28.5 -2.17329 26.5 5.02671C24.5 12.2267 21 15.36 19.5 16.0267C27.3333 9.6934 42.7 -1.37323 41.5 5.02671C40.3 11.4267 37.6667 15.0267 36.5 16.0267C45.8333 8.69338 63.6 -3.77329 60 5.02671C56.4 13.8267 61.5 16.0267 64.5 16.0267"
+                    stroke="#FFB835"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <h2 className="font-runestars relative">
+                <span className="text-shadow-[0_0_6px_#6E0112,1px_0_0_#6E0112,2px_0_0_#6E0112,-1px_0_0_#6E0112,-2px_0_0_#6E0112,0_1px_0_#6E0112,0_2px_0_#6E0112,0_-1px_0_#6E0112,0_-2px_0_#6E0112,1px_1px_0_#6E0112,2px_2px_0_#6E0112,-1px_-1px_0_#6E0112,-2px_-2px_0_#6E0112,1px_-1px_0_#6E0112,2px_-2px_0_#6E0112,-1px_1px_0_#6E0112,-2px_2px_0_#6E0112] font-extrabold text-3xl md:text-4xl text-white whitespace-nowrap">
+                  BERITA ENGGAL
+                </span>
+              </h2>
             </div>
-            <h2 className="font-runestars mb-6 relative">
-              <span className="text-shadow-[0_0_6px_#6E0112,1px_0_0_#6E0112,2px_0_0_#6E0112,-1px_0_0_#6E0112,-2px_0_0_#6E0112,0_1px_0_#6E0112,0_2px_0_#6E0112,0_-1px_0_#6E0112,0_-2px_0_#6E0112,1px_1px_0_#6E0112,2px_2px_0_#6E0112,-1px_-1px_0_#6E0112,-2px_-2px_0_#6E0112,1px_-1px_0_#6E0112,2px_-2px_0_#6E0112,-1px_1px_0_#6E0112,-2px_2px_0_#6E0112] font-extrabold text-3xl md:text-4xl text-white whitespace-nowrap">
-                BERITA ENGGAL
-              </span>
-            </h2>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 bg-[#F7F7F7] px-3 py-1.5 rounded-lg border border-gray-200">
+                <span className="text-xs text-gray-500 font-medium">Tampilkan:</span>
+                <select
+                  value={limit}
+                  onChange={handleLimitChange}
+                  className="bg-transparent text-xs font-semibold text-[#1E1E1E] focus:outline-none cursor-pointer"
+                >
+                  <option value={6}>6</option>
+                  <option value={12}>12</option>
+                  <option value={24}>24</option>
+                  <option value={48}>48</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1 bg-[#F7F7F7] p-1 rounded-lg border border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page <= 1}
+                  className="w-8 h-8 flex items-center justify-center rounded text-sm font-semibold transition text-gray-600 hover:bg-[#9C0000] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                  aria-label="Halaman sebelumnya"
+                >
+                  &lt;
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || (p >= page - 1 && p <= page + 1))
+                  .map((p, idx, arr) => {
+                    const prev = arr[idx - 1];
+                    const showEllipsis = prev && p - prev > 1;
+
+                    return (
+                      <div key={p} className="flex items-center">
+                        {showEllipsis && (
+                          <span className="w-6 text-center text-gray-400 text-xs select-none">
+                            ...
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handlePageChange(p)}
+                          className={`w-8 h-8 rounded text-xs font-semibold transition ${
+                            page === p
+                              ? "bg-[#9C0000] text-white shadow-sm"
+                              : "text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page >= totalPages}
+                  className="w-8 h-8 flex items-center justify-center rounded text-sm font-semibold transition text-gray-600 hover:bg-[#9C0000] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                  aria-label="Halaman selanjutnya"
+                >
+                  &gt;
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="my-16 grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 md:gap-y-16">
+
+          <div className="my-10 grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-8 md:gap-y-16">
             {isLoading ? (
               <div className="col-span-2 lg:col-span-3 py-10 text-center">
                 <p className="text-gray-500 font-medium">Memuat berita...</p>

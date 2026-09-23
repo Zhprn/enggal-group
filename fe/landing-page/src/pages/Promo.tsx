@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PromoCard from "../components/PromoCard";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from "../lib/api-client";
+import { apiClient, API_BASE_URL } from "../lib/api-client";
 
 type Brand = {
   id: string;
@@ -301,7 +301,7 @@ function Promo() {
                     title={promo.title}
                     description={promo.subtitle}
                     validUntil={formatDate(promo.berlakuHingga)}
-                    image={`${promo.image}`}
+                    image={`${API_BASE_URL}${promo.image}`}
                   />
                 </div>
               ))

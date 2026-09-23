@@ -134,7 +134,7 @@ function PromoDetail() {
           <div className="flex w-full lg:w-auto flex-col gap-y-4 md:gap-y-6">
             <div className="bg-[#F7F7F7] px-4 py-4 md:py-6 rounded-lg w-full lg:max-w-sm">
               <img
-                src={`${promo.image}`}
+                src={`${API_BASE_URL}${promo.image}`}
                 alt={promo.title}
                 className="w-full h-auto rounded-xl"
                 onError={(e) => {
@@ -306,7 +306,7 @@ function PromoDetail() {
                       title={recommendedPromo.title}
                       description={recommendedPromo.subtitle}
                       validUntil={formatDate(recommendedPromo.berlakuHingga)}
-                      image={`${recommendedPromo.image}`}
+                      image={`${API_BASE_URL}${recommendedPromo.image}`}
                     />
                   </div>
                 ))

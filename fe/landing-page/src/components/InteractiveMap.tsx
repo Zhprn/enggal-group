@@ -179,7 +179,7 @@ const InteractiveMap = () => {
         // Ensure googleMapsLink is a complete URL
         const fullGoogleMapsLink = outlet.googleMapsLink.startsWith('http')
           ? outlet.googleMapsLink
-          : `${outlet.googleMapsLink}`;
+          : `${API_BASE_URL}${outlet.googleMapsLink}`;
 
         regionOutlets[outlet.provinsi].push({
           id: outlet.id,
@@ -214,7 +214,7 @@ const InteractiveMap = () => {
             >
               <div className="relative flex flex-col items-center">
                 <img
-                  src={`${brand.logo}`}
+                  src={`${API_BASE_URL}${brand.logo}`}
                   className={brandConfig.size}
                   alt={brand.nama}
                 />

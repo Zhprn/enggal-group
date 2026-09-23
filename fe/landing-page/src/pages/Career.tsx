@@ -211,7 +211,7 @@ function Career() {
   const brands = brandsData?.data ?? [];
 
   const brandLogos = brands.map(brand => ({
-    src: `${brand.logo}`,
+    src: `${API_BASE_URL}${brand.logo}`,
     alt: brand.nama
   }));
 
