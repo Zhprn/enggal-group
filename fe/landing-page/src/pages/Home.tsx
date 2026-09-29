@@ -489,7 +489,7 @@ function Home() {
 
             <div className="col-span-3">
               <img
-                src="/images/hero_1.webp"
+                src="/images/hero_1new.png"
                 className="w-full h-full object-cover"
                 alt="Food 1"
               />
