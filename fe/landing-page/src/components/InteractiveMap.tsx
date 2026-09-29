@@ -214,7 +214,7 @@ const InteractiveMap = () => {
             >
               <div className="relative flex flex-col items-center">
                 <img
-                  src={`${API_BASE_URL}${brand.logo}`}
+                  src={`${brand.logo}`}
                   className={brandConfig.size}
                   alt={brand.nama}
                 />

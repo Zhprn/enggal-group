@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { apiClient, API_BASE_URL } from '../lib/api-client';
+import { apiClient } from '../lib/api-client';
 import { fetchProvinces, fetchRegenciesByProvince } from '../lib/wilayah';
 import brandIcon from '../assets/images/brand_icon.svg';
 import outletIcon from '../assets/images/outlet_icon.svg';
@@ -211,7 +211,7 @@ function Career() {
   const brands = brandsData?.data ?? [];
 
   const brandLogos = brands.map(brand => ({
-    src: `${API_BASE_URL}${brand.logo}`,
+    src: `${brand.logo}`,
     alt: brand.nama
   }));
 

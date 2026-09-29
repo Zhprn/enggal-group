@@ -51,7 +51,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { API_BASE_URL, apiClient } from "@/lib/api-client";
+import { apiClient } from "@/lib/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import Users from "@/assets/icons/jumlahusercareer.svg";
