@@ -655,7 +655,7 @@ function Home() {
             </motion.div>
             <motion.div whileInView={{ opacity: 1, transition: { duration: 0.5 } }} initial={{ opacity: 0 }} className="flex items-end justify-center h-full">
               <img
-                src={getImageUrl(ceoData?.image, "/images/ceo.png")}
+                src={ceoData?.image}
                 alt={ceoData?.nama ? `${ceoData.nama} - ${ceoData.title}` : "Enggal Group CEO"}
                 className="relative z-10 h-full w-auto object-cover"
               />

@@ -61,8 +61,8 @@ async function fetchBrands() {
 
 async function fetchPromos(brandId?: string) {
   const url = brandId && brandId !== "all"
-    ? `/promo?page=1&limit=100&brandId=${brandId}`
-    : `/promo?page=1&limit=100`;
+    ? `/promo?status=aktif&page=1&limit=100&brandId=${brandId}`
+    : `/promo?status=aktif&page=1&limit=100`;
 
   const response = await apiClient.get<Promo[], PromoListMeta>(url);
 

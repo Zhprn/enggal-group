@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { apiClient, API_BASE_URL } from "../lib/api-client";
+import { apiClient } from "../lib/api-client";
 import { useSeoMeta } from "../hooks/useSeoMeta";
 
 type BeritaItem = {
@@ -56,7 +56,7 @@ async function fetchRelatedBerita(currentSlug: string) {
 
 async function fetchPromoHighlights() {
   const response = await apiClient.get<PromoItem[], PromoListMeta>(
-    `/promo?page=1&limit=3`,
+    `/promo?page=1&limit=3&status=aktif`,
   );
 
   return response.data ?? [];
@@ -80,7 +80,6 @@ function formatDateTime(value: string) {
   return hasExplicitTime ? `${datePart}` : datePart;
 }
 
-const API_IMAGE_BASE = "https://api.enggalgroup.id";
 
 function getImageUrl(path?: string | null) {
   if (!path) {
@@ -92,7 +91,7 @@ function getImageUrl(path?: string | null) {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_IMAGE_BASE}${normalizedPath}`;
+  return `${normalizedPath}`;
 }
 
 function getAbsoluteImageUrl(path?: string | null) {
@@ -650,7 +649,7 @@ function BeritaDetail() {
                         className="flex gap-4 py-4 first:pt-0 last:pb-0"
                       >
                         <img
-                          src={`${API_BASE_URL}${promo.image}`}
+                          src={`${promo.image}`}
                           alt={promo.title}
                           className="h-[80px] w-[60px] rounded-lg object-cover"
                         />
