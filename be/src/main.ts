@@ -71,6 +71,10 @@ async function bootstrap() {
     }),
   );
 
+  app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+  });
+
   const port = process.env.PORT || 3055;
   await app.listen(port);
 }
