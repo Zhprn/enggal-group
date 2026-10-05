@@ -1,5 +1,4 @@
-const WILAYAH_API_BASE_URL =
-  'https://raw.githubusercontent.com/emsifa/api-wilayah-indonesia/master/static/api';
+const WILAYAH_API_BASE_URL = 'https://www.emsifa.com/api-wilayah-indonesia/api';
 
 export type Province = {
   id: string;
@@ -13,13 +12,27 @@ export type Regency = {
 };
 
 async function fetchWilayah<T>(path: string): Promise<T> {
-  const response = await fetch(`${WILAYAH_API_BASE_URL}/${path}`);
+  const primaryUrl = `${WILAYAH_API_BASE_URL}/${path}`;
 
-  if (!response.ok) {
-    throw new Error(`Unable to load region data (${response.status})`);
+  try {
+    const response = await fetch(primaryUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return (await response.json()) as T;
+  } catch (error) {
+    try {
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(primaryUrl)}`;
+      const response = await fetch(proxyUrl);
+      if (!response.ok) {
+        throw new Error(`Proxy HTTP error! status: ${response.status}`);
+      }
+      return (await response.json()) as T;
+    } catch (fallbackError) {
+      console.error(`Gagal memuat data dari ${path}:`, fallbackError);
+      return [] as unknown as T;
+    }
   }
-
-  return response.json() as Promise<T>;
 }
 
 export function fetchProvinces(): Promise<Province[]> {
@@ -27,5 +40,6 @@ export function fetchProvinces(): Promise<Province[]> {
 }
 
 export function fetchRegenciesByProvince(provinceId: string): Promise<Regency[]> {
+  if (!provinceId) return Promise.resolve([]);
   return fetchWilayah<Regency[]>(`regencies/${provinceId}.json`);
 }
