@@ -34,14 +34,33 @@ export class MembershipService {
   private async generateMembershipId(): Promise<string> {
     const year = new Date().getFullYear();
 
-    const totalMemberships = await this.prisma.membership.count();
+    const lastMembership = await this.prisma.membership.findFirst({
+      where: {
+        membershipId: {
+          startsWith: `EGI-${year}-`,
+        },
+      },
+      orderBy: {
+        createdAt: 'desc', 
+      },
+    });
 
-    const sequenceNumber = totalMemberships + 1;
+    let sequenceNumber = 1;
 
-    const paddedSequence = sequenceNumber.toString().padStart(4, '0');
+    if (lastMembership && lastMembership.membershipId) {
+        const parts = lastMembership.membershipId.split('-');
+        if (parts.length === 3) { 
+          const lastSequence = parseInt(parts[2], 10);
+          if (!isNaN(lastSequence)) {
+            sequenceNumber = lastSequence + 1;
+          }
+        }
+      }
 
-    return `EGI-${year}-${paddedSequence}`;
-  }
+      const paddedSequence = sequenceNumber.toString().padStart(4, '0');
+
+      return `EGI-${year}-${paddedSequence}`;
+    }
 
   private async appendToGoogleSheets(membership: any) {
     const spreadsheetId = this.configService.get<string>(
