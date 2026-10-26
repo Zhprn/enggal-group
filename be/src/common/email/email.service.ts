@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MailerService } from '@nestjs-modules/mailer';
-import { EMAIL_CONFIG } from './email.constants';
+import { ConfigService } from '@nestjs/config';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
+  private resend: Resend;
 
-  constructor(private readonly mailerService: MailerService) { }
+  constructor(private configService: ConfigService) {
+    const apiKey = this.configService.get<string>('RESEND_API_KEY');
+    this.resend = new Resend(apiKey);
+  }
 
   async sendMembershipEmail(
     membership: {
@@ -22,22 +26,29 @@ export class EmailService {
     pdfBuffer: Buffer,
   ): Promise<void> {
     try {
-      await this.mailerService.sendMail({
-        to: membership.email,
-        from: EMAIL_CONFIG.EMAIL_FROM,
+      const fromEmail =
+        this.configService.get<string>('EMAIL_FROM') ||
+        '"Enggal Group" <contact@enggalgroup.id>';
+
+      const { data, error } = await this.resend.emails.send({
+        from: fromEmail,
+        to: [membership.email],
         subject: 'Selamat Datang di Membership Enggal Group Indonesia!',
         html: this.getMembershipEmailTemplate(membership),
         attachments: [
           {
             filename: `membership-card-${membership.membershipId}.pdf`,
             content: pdfBuffer,
-            contentType: 'application/pdf',
           },
         ],
       });
 
+      if (error) {
+        throw new Error(error.message);
+      }
+
       this.logger.log(
-        `Membership email sent successfully to: ${membership.email}`,
+        `Membership email sent successfully via Resend to: ${membership.email} (ID: ${data?.id})`,
       );
     } catch (error) {
       this.logger.error(
@@ -116,8 +127,8 @@ export class EmailService {
             <p><strong>No. HP:</strong> ${membership.no_hp}</p>
             <p><strong>Jenis Kelamin:</strong> ${membership.jenis_kelamin === 'LAKI_LAKI' ? 'Laki-laki' : 'Perempuan'}</p>
             <p><strong>Kota:</strong> ${membership.kota}</p>
-            <p><strong>Tanggal Lahir:</strong> ${membership.tanggal_lahir.toLocaleDateString('id-ID')}</p>
-            <p><strong>Tanggal Bergabung:</strong> ${membership.createdAt.toLocaleDateString('id-ID')}</p>
+            <p><strong>Tanggal Lahir:</strong> ${new Date(membership.tanggal_lahir).toLocaleDateString('id-ID')}</p>
+            <p><strong>Tanggal Bergabung:</strong> ${new Date(membership.createdAt).toLocaleDateString('id-ID')}</p>
           </div>
 
           <p>Kartu membership resmi Anda terlampir dalam email ini sebagai file PDF. Tunjukkan kartu tersebut saat berbelanja di outlet Enggal Group Indonesia.</p>
