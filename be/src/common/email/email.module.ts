@@ -10,10 +10,13 @@ import { EMAIL_CONFIG } from './email.constants';
       transport: {
         host: EMAIL_CONFIG.SMTP_HOST,
         port: EMAIL_CONFIG.SMTP_PORT,
-        secure: false,
+        secure: true,
         auth: {
           user: EMAIL_CONFIG.SMTP_USER,
           pass: EMAIL_CONFIG.SMTP_PASSWORD,
+        },
+        tls: {
+          rejectUnauthorized: false,
         },
       },
       defaults: {
