@@ -10,7 +10,7 @@ import { EMAIL_CONFIG } from './email.constants';
       transport: {
         host: EMAIL_CONFIG.SMTP_HOST,
         port: EMAIL_CONFIG.SMTP_PORT,
-        secure: true,
+        secure: EMAIL_CONFIG.SMTP_PORT === 465,
         auth: {
           user: EMAIL_CONFIG.SMTP_USER,
           pass: EMAIL_CONFIG.SMTP_PASSWORD,
